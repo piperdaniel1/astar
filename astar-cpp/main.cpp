@@ -13,7 +13,6 @@ void import_from_file(std::string filename) {
     //  - some way to represent the points in the occupancy grid
     //     (essentially we need to know how to map the coordinate space to the occupancy grid)
 
-
     // To start, we get all the points from the file
     Point tl_corner;
     Point br_corner;
@@ -129,6 +128,11 @@ void import_from_file(std::string filename) {
     for (auto obstacle : obstacles) {
         std::cout << obstacle << std::endl;
     }
+
+    // Lets make the astar class
+    int num_cells = 20;
+    AStar astar = AStar(tl_corner, br_corner, num_cells, start, goal, obstacles);
+
 }
 
 int main() {

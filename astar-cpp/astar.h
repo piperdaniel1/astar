@@ -13,6 +13,8 @@ enum PointType {
 // Represents a point in space
 class Point {
     public:
+    Point();
+    Point(int, int, int);
     PointType type;
     int x;
     int y;
@@ -45,16 +47,19 @@ class AStarPoint {
 
 class AStar {
     public:
-    AStar();
+    AStar(Point, Point, int, Point, Point, std::vector<Point>);
     ~AStar();
     
     private:
-    // Occupancy grid for obstacles
-    std::vector<std::vector<bool>> occ_grid;
+    // 3D Occupancy grid for obstacles
+    std::vector<std::vector<std::vector<bool>>> occ_grid;
+    Point tl_point;
+    Point br_point;
+    int grid_size;
 
     // The start and goal points
-    AStarPoint* start;
-    AStarPoint* goal;
+    Point* start;
+    Point* goal;
 
     // The open and closed lists
     std::vector<AStarPoint*> open;
