@@ -1,13 +1,10 @@
 #include "astar.h"
-#include <iostream>
-#include <algorithm>
-#include <cmath>
 
 using namespace std;
 
 AStar::AStar() {
-    // Initialize the grid
-    grid = vector<vector<bool>>(20, vector<bool>(20, false));
+    // Initialize the occupancy grid
+    occ_grid = vector<vector<bool>>(20, vector<bool>(20, false));
 
     // Set start and goal to null
     start = nullptr;
@@ -67,29 +64,6 @@ void AStar::push_open(AStarPoint* point) {
                 return a->est_cost > b->est_cost;
             });
 
-            // Delete the new point
-            delete point;
-            return;
-        }
-    }
-
-    // Check if the point is already in the closed list
-    for (auto closed_point : closed) {
-        if (closed_point->x == point->x && closed_point->y == point->y && closed_point->z == point->z) {
-            // If the point is already in the closed list, check if the new point has a lower cost
-            if (point->prev_cost < closed_point->prev_cost) {
-                // If the new point has a lower cost, replace the old point with the new point
-                closed_point->prev_cost = point->prev_cost;
-                closed_point->est_cost = point->est_cost;
-                closed_point->parent = point->parent;
-                // Move the point from the closed list to the open list
-                closed.erase(remove(closed.begin(), closed.end(), closed_point), closed.end());
-                open.push_back(closed_point);
-                // Sort the open list by est_cost
-                sort(open.begin(), open.end(), [](AStarPoint* a, AStarPoint* b) {
-                    return a->est_cost > b->est_cost;
-                });
-            }
             // Delete the new point
             delete point;
             return;

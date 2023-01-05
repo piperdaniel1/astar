@@ -49,14 +49,18 @@ class PointCloud:
         plt.ylim(tl_corner.y, br_corner.y)
         
         plt.show()
-    
-    def to_file(self, filename):
+
+    def to_file(self, filename, tl_corner: Point, br_corner: Point):
+        if self.start_point is None or self.end_point is None:
+            raise ValueError("Start and end points must be set")
+
         with open(filename, 'w') as f:
-            if self.start_point is not None and self.end_point is not None:
-                f.write(f"{self.start_point.x} {self.start_point.y} {self.start_point.z}")
-                f.write(f"\n{self.end_point.x} {self.end_point.y} {self.end_point.z}")
-            else:
-                raise ValueError("Start and end points must be set")
+            f.write(f"version=1")
+            f.write(f"\n{tl_corner.x} {tl_corner.y} {tl_corner.z}")
+            f.write(f"\n{br_corner.x} {br_corner.y} {br_corner.z}")
+
+            f.write(f"\n{self.start_point.x} {self.start_point.y} {self.start_point.z}")
+            f.write(f"\n{self.end_point.x} {self.end_point.y} {self.end_point.z}")
 
             f.write(f"\n{len(self.point_list)}")
             for point in self.point_list:
@@ -124,7 +128,7 @@ def gen_new_cloud(num_obstacles) -> PointCloud:
         radius = random.uniform(0.5, 2)
         obstacles.add_obstacle(Sphere(center, radius))
     
-    for _ in range(50):
+    for _ in range(500):
         cloud.add_point(obstacles.sample_colliding_point())
     
     start = obstacles.sample_safe_point()
@@ -154,7 +158,7 @@ def main():
         print(cloud)
         cloud.plot(Point(-10, -10, -10), Point(10, 10, 10))
 
-        cloud.to_file("test.cld")
+        cloud.to_file("test.cld", Point(-10, -10, -10), Point(10, 10, 10))
         
 
 if __name__ == "__main__":

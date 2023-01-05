@@ -1,4 +1,5 @@
 use std::{fs::File, io::prelude::*};
+use std::collections::LinkedList;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum PointType {
@@ -14,6 +15,69 @@ struct Point {
     z: f64,
     _type: PointType,
 }
+
+#[derive(Debug, Clone, Copy)]
+struct AStarCell {
+    x: u64,
+    y: u64,
+    z: u64,
+    parent_x: u64,
+    parent_y: u64,
+    parent_z: u64,
+    prev_cost: i64,
+    est_cost: i64,
+    is_root: bool,
+}
+
+impl AStarCell {
+    fn new(x: u64, y: u64, z: u64, parent_x: u64, parent_y: u64, parent_z: u64, prev_cost: i64, est_cost: i64) -> AStarCell {
+        AStarCell {
+            x,
+            y,
+            z,
+            parent_x,
+            parent_y,
+            parent_z,
+            prev_cost,
+            est_cost,
+            is_root: false,
+        }
+    }
+
+    fn new_root(x: u64, y: u64, z: u64, prev_cost: i64, est_cost: i64) -> AStarCell {
+        AStarCell {
+            x,
+            y,
+            z,
+            parent_x: x,
+            parent_y: y,
+            parent_z: z,
+            prev_cost,
+            est_cost,
+            is_root: true,
+        }
+    }
+
+    fn get_neighboring_2d(&self, x_min: u64, x_max: u64, y_min: u64, y_max: u64) -> Vec<AStarCell> {
+        let mut neighbors: Vec<AStarCell> = Vec::new();
+
+        if self.x > x_min {
+            neighbors.push(AStarCell::new(self.x - 1, self.y, self.z, self.x, self.y, self.z, self.prev_cost + 1, 0));
+        }
+        if self.x < x_max-1 {
+            neighbors.push(AStarCell::new(self.x + 1, self.y, self.z, self.x, self.y, self.z, self.prev_cost + 1, 0));
+        }
+        if self.y > y_min {
+            neighbors.push(AStarCell::new(self.x, self.y - 1, self.z, self.x, self.y, self.z, self.prev_cost + 1, 0));
+        }
+        if self.y < y_max-1 {
+            neighbors.push(AStarCell::new(self.x, self.y + 1, self.z, self.x, self.y, self.z, self.prev_cost + 1, 0));
+        }
+
+        neighbors
+    }
+}
+
 
 impl Point {
     fn new(x: f64, y: f64, z: f64, _type: PointType) -> Point {
@@ -39,6 +103,13 @@ impl AStar {
             br_point,
             points,
         }
+    }
+
+    fn est_cost_2d(&self, cell: &AStarCell) -> i64 {
+        // using l2 norm
+        let x_diff = (self.goal_point.x - cell.x as f64).abs();
+        let y_diff = (self.goal_point.y - cell.y as f64).abs();
+        (x_diff.powi(2) + y_diff.powi(2)).sqrt() as i64
     }
 
     fn find_path(&self) -> Vec<Point> {
@@ -84,6 +155,34 @@ impl AStar {
             }
             println!();
         }
+
+        // ****************************************************************
+        //                         A* ALGORITHM
+        // ****************************************************************
+
+        let mut open: Vec<AStarCell> = Vec::new();
+        let mut closed: Vec<AStarCell> = Vec::new();
+
+        open.push(AStarCell::new_root(x_start_cell as u64, y_start_cell as u64, 0, 0, 0));
+
+        open[0].est_cost = self.est_cost_2d(&open[0]);
+
+        while open.len() > 0 {
+            // get the lowest estimated cost open cell (open is sorted by est_cost)
+            let mut closest = open[0];
+
+            // if the closest cell is the goal, we are done
+            if closest.x == x_goal_cell as u64 && closest.y == y_goal_cell as u64 {
+                break;
+            }
+
+            // remove the closest cell from open
+            open.remove(0);
+
+            // add the closest cell to closed
+            closed.push(closest);
+        }
+
 
         let mut path: Vec<Point> = Vec::new();
         path.push(self.start_point);
