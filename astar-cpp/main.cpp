@@ -112,7 +112,8 @@ AStar* import_from_file(std::string filename) {
         getline(ss, token, ' ');
         obstacle.z = std::stod(token);
 
-        obstacles.push_back(obstacle);
+        // TODO add this back
+        // obstacles.push_back(obstacle);
     }
 
     // Now we have all the data we need to run Astar
@@ -131,7 +132,7 @@ AStar* import_from_file(std::string filename) {
     }
 
     // Lets make the astar class
-    int num_cells = 21;
+    int num_cells = 20;
     return new AStar(tl_corner, br_corner, num_cells, start, goal, obstacles);
 }
 

@@ -140,7 +140,7 @@ void AStar::push_open(AStarPoint* point) {
 
     // Sort the open list by est_cost in descending order
     std::sort(open.begin(), open.end(), [](AStarPoint* a, AStarPoint* b) {
-        return a->est_cost > b->est_cost;
+        return (a->est_cost+a->prev_cost) > (b->est_cost+b->prev_cost);
     });    
 }
 
@@ -274,13 +274,15 @@ AStarPoint* AStar::conv_point(Point* point, AStarPoint* parent) {
         } else if ((parent->x == point->x && parent->y != point->y && parent->z != point->z)
                 || (parent->x != point->x && parent->y == point->y && parent->z != point->z)
                 || (parent->x != point->x && parent->y != point->y && parent->z == point->z)) {
-            astar_point->prev_cost += sqrt(2 * this->grid_cell_len_x);
+            astar_point->prev_cost += 2 * this->grid_cell_len_x;
+            // astar_point->prev_cost += sqrt(2 * pow(this->grid_cell_len_x, 2));
         } else {
-            astar_point->prev_cost += sqrt(3 * this->grid_cell_len_x);
+            astar_point->prev_cost += 3 * this->grid_cell_len_x;
+            // astar_point->prev_cost += sqrt(3 * pow(this->grid_cell_len_x, 2));
         }
     }
 
-    astar_point->est_cost = astar_point->prev_cost + dist(point, this->goal);
+    astar_point->est_cost = dist(point, this->goal);
 
     return astar_point;
 }
@@ -305,11 +307,12 @@ Point* AStar::conv_astar_point(AStarPoint* point) {
 }
 
 double AStar::dist(Point* a, Point* b) {
-    return sqrt(pow(a->x - b->x, 2) + pow(a->y - b->y, 2) + pow(a->z - b->z, 2));
+    // return sqrt(pow(a->x - b->x, 2) + pow(a->y - b->y, 2) + pow(a->z - b->z, 2));
+    return abs(a->x - b->x) + abs(a->y - b->y) + abs(a->z - b->z);
 }
 
 double AStar::dist(double x1, double y1, double z1, double x2, double y2, double z2) {
-    return sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2) + pow(z1 - z2, 2));
+    return abs(x1 - x2) + abs(y1 - y2) + abs(z1 - z2);
 }
 
 void AStar::push_open(Point* point, AStarPoint* parent) {
