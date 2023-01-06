@@ -60,9 +60,9 @@ class AStar {
     Point* br_point;
     // number of cells in the grid
     int grid_size;
-    int grid_cell_len_x; // Length of a cell in the x direction
-    int grid_cell_len_y; // Length of a cell in the y direction
-    int grid_cell_len_z; // Length of a cell in the z direction
+    double grid_cell_len_x; // Length of a cell in the x direction
+    double grid_cell_len_y; // Length of a cell in the y direction
+    double grid_cell_len_z; // Length of a cell in the z direction
 
     // The start and goal points
     Point* start;

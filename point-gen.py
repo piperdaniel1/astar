@@ -50,7 +50,7 @@ class PointCloud:
         ax.scatter(self.start_point.x, self.start_point.y, self.start_point.z, c='g')
 
         assert(self.end_point is not None)
-        ax.scatter(self.end_point.x, self.end_point.y, self.start_point.z, c='r')
+        ax.scatter(self.end_point.x, self.end_point.y, self.end_point.z, c='r')
 
         ax.set_xlim(tl_corner.x, br_corner.x)
         ax.set_ylim(tl_corner.y, br_corner.y)
@@ -154,6 +154,30 @@ def gen_new_cloud(num_obstacles) -> PointCloud:
 
     return cloud
 
+def gen_cloud_from_file(filename) -> PointCloud:
+    with open(filename) as f:
+        lines = f.readlines()
+    
+    if lines[0].split("=")[1].strip() != "1":
+        raise ValueError("Invalid file version")
+    
+    start: Point = Point(float(lines[3].split()[0]), float(lines[3].split()[1]), float(lines[3].split()[2]))
+    end: Point = Point(float(lines[4].split()[0]), float(lines[4].split()[1]), float(lines[4].split()[2]))
+
+    num_points = int(lines[5])
+    points = []
+    for i in range(num_points):
+        points.append(Point(float(lines[6 + i].split()[0]), float(lines[6 + i].split()[1]), float(lines[6 + i].split()[2])))
+
+    cloud = PointCloud(points)
+    cloud.start_point = start
+    cloud.end_point = end
+
+    print(cloud.start_point)
+    print(cloud.end_point)
+
+    return cloud
+
 def main():
     if len(sys.argv) == 1:
         print_help()
@@ -163,7 +187,8 @@ def main():
 
         num_obstacles = int(sys.argv[2])
 
-        cloud = gen_new_cloud(num_obstacles)
+        # cloud = gen_new_cloud(num_obstacles)
+        cloud = gen_cloud_from_file("point-cloud.cld")
 
         path = []
         try:
@@ -173,15 +198,13 @@ def main():
             for line in path_lines:
                 cord_split = line.split()
                 path.append(Point(float(cord_split[0]), float(cord_split[1]), float(cord_split[2])))
+            
+            cloud.import_path(path)
         except FileNotFoundError:
             pass
     
-        print(path)
-
         cloud.plot(Point(-10, -10, -10), Point(10, 10, 10))
         cloud.to_file("test.cld", Point(-10, -10, -10), Point(10, 10, 10))
-
-        
 
 if __name__ == "__main__":
     main()

@@ -26,13 +26,13 @@ AStar::AStar(Point tl_corner, Point bl_corner, int num_cells, Point start, Point
     this->grid_size = num_cells;
 
     // First we need to create the occupancy grid
-    int x_size = abs(tl_corner.x - bl_corner.x);
+    double x_size = abs(tl_corner.x - bl_corner.x);
     x_size = x_size / num_cells;
 
-    int y_size = abs(tl_corner.y - bl_corner.y);
+    double y_size = abs(tl_corner.y - bl_corner.y);
     y_size = y_size / num_cells;
 
-    int z_size = abs(tl_corner.z - bl_corner.z);
+    double z_size = abs(tl_corner.z - bl_corner.z);
     z_size = z_size / num_cells;
 
     grid_cell_len_x = x_size;
@@ -201,20 +201,22 @@ std::vector<Point> AStar::run() {
     this->path.clear();
 
     // Add the start point to the open list
+    std::cout << "Start point: " << *this->start << " (converted: " << *conv_point(this->start, nullptr) << ")" << std::endl;
     this->push_open(this->start);
 
     // std::cout << "Push open [0] is " << this->open[0]->x << ", " << this->open[0]->y << ", " << this->open[0]->z << std::endl;
 
+    AStarPoint* conv_goal = conv_point(goal, nullptr);
     // While the open list is not empty
     while (this->open.size() > 0) {
         // Get the lowest cost point from the open list
         AStarPoint* current = this->pull_lowest_open();
-        Point* conv_current = conv_astar_point(current);
 
-        // std::cout << "Distance heuristic: " << this->dist(conv_current, goal) << std::endl;
+        // std::cout << "\nDistance heuristic: " << this->dist(conv_astar_point(current), goal) << std::endl;
+        // std::cout << "Current point: " << *current << " (converted: " << *conv_astar_point(current) << ")" << std::endl;
 
         // If the current point is the goal point, we are done
-        if (conv_current->x == this->goal->x && conv_current->y == this->goal->y && conv_current->z == this->goal->z) {
+        if (current->x == conv_goal->x && current->y == conv_goal->y && current->z == conv_goal->z) {
             // We are done, lets build the path
             AStarPoint* path_point = current;
             while (path_point != nullptr) {
@@ -286,18 +288,18 @@ AStarPoint* AStar::conv_point(Point* point, AStarPoint* parent) {
 
 Point* AStar::conv_offset_astar_point(AStarPoint* point, int x_off, int y_off, int z_off) {
     Point* conv_point = new Point();
-    conv_point->x = double(point->x + x_off) / this->grid_cell_len_x + tl_point->x ;
-    conv_point->y = double(point->y + y_off) / this->grid_cell_len_y + tl_point->y ;
-    conv_point->z = double(point->z + z_off) / this->grid_cell_len_z + tl_point->z ;
+    conv_point->x = double(point->x + x_off) * this->grid_cell_len_x + tl_point->x ;
+    conv_point->y = double(point->y + y_off) * this->grid_cell_len_y + tl_point->y ;
+    conv_point->z = double(point->z + z_off) * this->grid_cell_len_z + tl_point->z ;
 
     return conv_point;
 }
 
 Point* AStar::conv_astar_point(AStarPoint* point) {
     Point* conv_point = new Point();
-    conv_point->x = double(point->x) / this->grid_cell_len_x + tl_point->x;
-    conv_point->y = double(point->y) / this->grid_cell_len_y + tl_point->y;
-    conv_point->z = double(point->z) / this->grid_cell_len_z + tl_point->z;
+    conv_point->x = double(point->x) * this->grid_cell_len_x + tl_point->x;
+    conv_point->y = double(point->y) * this->grid_cell_len_y + tl_point->y;
+    conv_point->z = double(point->z) * this->grid_cell_len_z + tl_point->z;
 
     return conv_point;
 }
