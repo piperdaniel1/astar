@@ -113,7 +113,7 @@ AStar* import_from_file(std::string filename) {
         obstacle.z = std::stod(token);
 
         // TODO add this back
-        // obstacles.push_back(obstacle);
+        obstacles.push_back(obstacle);
     }
 
     // Now we have all the data we need to run Astar
@@ -143,7 +143,7 @@ int main() {
     }
 
     // get the path
-    std::vector<Point> path = pathfinder->run();
+    std::vector<Point*> path = pathfinder->run();
 
     // print the path
     if (path.empty()) {
@@ -153,7 +153,12 @@ int main() {
 
     std::cout << "Path: " << std::endl;
     for (auto point : path) {
-        std::cout << point << std::endl;
+        std::cout << *point << std::endl;
+    }
+
+    for (int i=0; i<path.size(); i++) {
+        delete path[i];
+        path[i] = nullptr;
     }
 
     delete pathfinder;

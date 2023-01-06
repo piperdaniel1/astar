@@ -19,8 +19,6 @@ Point::Point(int x, int y, int z) {
 // In this constructor, we create a cube of size num_cells x num_cells x num_cells for the occupancy grid
 // It may be more efficient to use a non uniform grid, but this will work for now
 AStar::AStar(Point tl_corner, Point bl_corner, int num_cells, Point start, Point goal, std::vector<Point> obstacles) {
-    this->start = new Point(start.x, start.y, start.z);
-    this->goal = new Point(goal.x, goal.y, goal.z);
     this->tl_point = new Point(tl_corner.x, tl_corner.y, tl_corner.z);
     this->br_point = new Point(bl_corner.x, bl_corner.y, bl_corner.z);
     this->grid_size = num_cells;
@@ -38,6 +36,13 @@ AStar::AStar(Point tl_corner, Point bl_corner, int num_cells, Point start, Point
     grid_cell_len_x = x_size;
     grid_cell_len_y = y_size;
     grid_cell_len_z = z_size;
+
+    // Encode the start and goal points into the AStarPoint format
+    // (basically we just need to convert the x y and z coordinates to cell indices)
+    this->start = nullptr;
+    this->goal = nullptr;
+    this->start = conv_point(&start, nullptr);
+    this->goal = conv_point(&goal, nullptr);
 
     // Reshape this->occ_grid to be a 3D vector of size num_cells x num_cells x num_cells
     this->occ_grid.resize(num_cells, vector<vector<bool>>(num_cells, vector<bool>(num_cells, false)));
@@ -70,30 +75,36 @@ AStar::~AStar() {
     for (auto point : open) {
         if (point != nullptr) {
             delete point;
+            point = nullptr;
         }
     }
     for (auto point : closed) {
         if (point != nullptr) {
             delete point;
+            point = nullptr;
         }
     }
 
     // Delete the start and goal points
-    if (start != nullptr) {
-        delete start;
-    }
+    // if (start != nullptr) { // start point already deleted as it is in the closed list
+    //     delete start;
+    //     start = nullptr;
+    // }
 
     if (goal != nullptr) {
         delete goal;
+        goal = nullptr;
     }
 
     // Delete the top left and bottom right points
     if (tl_point != nullptr) {
         delete tl_point;
+        tl_point = nullptr;
     }
 
     if (br_point != nullptr) {
         delete br_point;
+        br_point = nullptr;
     }
 }
 
@@ -144,8 +155,8 @@ void AStar::push_open(AStarPoint* point) {
     });    
 }
 
-std::vector<Point*> AStar::get_neighbors(AStarPoint* point) {
-    std::vector<Point*> neighbors;
+std::vector<AStarPoint*> AStar::get_neighbors(AStarPoint* point) {
+    std::vector<AStarPoint*> neighbors;
 
     // There will be at most 26 neighbors for each point
     // There may be less if the point is on the edge of the grid
@@ -181,7 +192,14 @@ std::vector<Point*> AStar::get_neighbors(AStarPoint* point) {
                 }
 
                 // Add the neighbor to the list
-                Point* new_point = conv_offset_astar_point(point, i, j, k);
+                AStarPoint* new_point = new AStarPoint();
+                new_point->x = point->x + i;
+                new_point->y = point->y + j;
+                new_point->z = point->z + k;
+                new_point->parent = point;
+                new_point->prev_cost = point->prev_cost + dist(point, new_point);
+                new_point->est_cost = dist(new_point, this->goal);
+
                 neighbors.push_back(new_point);
             }
         }
@@ -190,7 +208,7 @@ std::vector<Point*> AStar::get_neighbors(AStarPoint* point) {
     return neighbors;
 }
 
-std::vector<Point> AStar::run() {
+std::vector<Point*> AStar::run() {
     // Use the cache if we have already run the algorithm before
     if (this->path.size() > 0) {
         return this->path;
@@ -201,12 +219,11 @@ std::vector<Point> AStar::run() {
     this->path.clear();
 
     // Add the start point to the open list
-    std::cout << "Start point: " << *this->start << " (converted: " << *conv_point(this->start, nullptr) << ")" << std::endl;
+    std::cout << "Start point: " << *this->start << std::endl;
     this->push_open(this->start);
 
     // std::cout << "Push open [0] is " << this->open[0]->x << ", " << this->open[0]->y << ", " << this->open[0]->z << std::endl;
 
-    AStarPoint* conv_goal = conv_point(goal, nullptr);
     // While the open list is not empty
     while (this->open.size() > 0) {
         // Get the lowest cost point from the open list
@@ -216,11 +233,11 @@ std::vector<Point> AStar::run() {
         // std::cout << "Current point: " << *current << " (converted: " << *conv_astar_point(current) << ")" << std::endl;
 
         // If the current point is the goal point, we are done
-        if (current->x == conv_goal->x && current->y == conv_goal->y && current->z == conv_goal->z) {
+        if (current->x == this->goal->x && current->y == this->goal->y && current->z == this->goal->z) {
             // We are done, lets build the path
             AStarPoint* path_point = current;
             while (path_point != nullptr) {
-                this->path.push_back(*conv_astar_point(path_point));
+                this->path.push_back(conv_astar_point(path_point));
                 path_point = path_point->parent;
             }
 
@@ -232,7 +249,7 @@ std::vector<Point> AStar::run() {
         }
 
         // Get the neighbors of the current point
-        vector<Point*> neighbors = this->get_neighbors(current);
+        vector<AStarPoint*> neighbors = this->get_neighbors(current);
 
         // std::cout << "Neighbors: " << neighbors.size() << std::endl;
 
@@ -242,7 +259,7 @@ std::vector<Point> AStar::run() {
             // Automatically performs the necessary checks to make sure we
             // don't add the same point twice or add a point that is in the closed list
             // std::cout << "Neighbor: " << neighbor->x << ", " << neighbor->y << ", " << neighbor->z << std::endl;
-            this->push_open(neighbor, current);
+            this->push_open(neighbor);
         }
 
         // std::cout << "Open: " << this->open.size() << std::endl;
@@ -282,7 +299,14 @@ AStarPoint* AStar::conv_point(Point* point, AStarPoint* parent) {
         }
     }
 
-    astar_point->est_cost = dist(point, this->goal);
+    // This only happens when we are initializing converting the start point and
+    // goal point to AStarPoints. We don't care about the estimated cost of the
+    // start/goal points, so we just set it to 0
+    if (this->goal == nullptr) {
+        astar_point->est_cost = 0;
+    } else {
+        astar_point->est_cost = dist(astar_point, this->goal);
+    }
 
     return astar_point;
 }
@@ -306,19 +330,11 @@ Point* AStar::conv_astar_point(AStarPoint* point) {
     return conv_point;
 }
 
-double AStar::dist(Point* a, Point* b) {
-    // return sqrt(pow(a->x - b->x, 2) + pow(a->y - b->y, 2) + pow(a->z - b->z, 2));
-    return abs(a->x - b->x) + abs(a->y - b->y) + abs(a->z - b->z);
+double AStar::dist(AStarPoint* a, AStarPoint* b) {
+    return sqrt(pow(a->x - b->x, 2) + pow(a->y - b->y, 2) + pow(a->z - b->z, 2));
+    // return abs(a->x - b->x) + abs(a->y - b->y) + abs(a->z - b->z);
 }
 
 double AStar::dist(double x1, double y1, double z1, double x2, double y2, double z2) {
     return abs(x1 - x2) + abs(y1 - y2) + abs(z1 - z2);
-}
-
-void AStar::push_open(Point* point, AStarPoint* parent) {
-    push_open(conv_point(point, parent));
-}
-
-void AStar::push_open(Point* point) {
-    push_open(conv_point(point, nullptr));
 }

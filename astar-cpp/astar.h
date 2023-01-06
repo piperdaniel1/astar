@@ -51,7 +51,7 @@ class AStar {
     ~AStar();
 
     // Runs the AStar algorithm
-    std::vector<Point> run();
+    std::vector<Point*> run();
     
     private:
     // 3D Occupancy grid for obstacles
@@ -65,15 +65,15 @@ class AStar {
     double grid_cell_len_z; // Length of a cell in the z direction
 
     // The start and goal points
-    Point* start;
-    Point* goal;
+    AStarPoint* start;
+    AStarPoint* goal;
 
     // The open and closed lists
     std::vector<AStarPoint*> open;
     std::vector<AStarPoint*> closed;
 
     // Cached path to goal
-    std::vector<Point> path;
+    std::vector<Point*> path;
 
     // has side effect of moving the lowest open into
     // the closed list
@@ -85,20 +85,14 @@ class AStar {
     //  - the point is not in the closed list
     void push_open(AStarPoint* point);
 
-    // Convenience method that converts a Point to an AStarPoint and assumes that the parent should be nullptr
-    void push_open(Point* point); 
-
-    // Convenience method that converts a Point to an AStarPoint
-    void push_open(Point* point, AStarPoint* parent); 
-
     AStarPoint* conv_point(Point* point, AStarPoint* parent);
     Point* conv_astar_point(AStarPoint* point);
     Point* conv_offset_astar_point(AStarPoint* point, int x_off, int y_off, int z_off);
 
     // Returns the neighbors of a point
-    std::vector<Point*> get_neighbors(AStarPoint* point);
+    std::vector<AStarPoint*> get_neighbors(AStarPoint* point);
 
     // Returns the L2 distance between two points
-    double dist(Point* a, Point* b);
+    double dist(AStarPoint* a, AStarPoint* b);
     double dist(double x1, double y1, double z1, double x2, double y2, double z2);
 };
