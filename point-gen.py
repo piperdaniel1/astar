@@ -36,18 +36,22 @@ class PointCloud:
             self.point_list.append(point)
     
     def plot(self, tl_corner: Point, br_corner: Point):
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+
         for point in self.point_list:
-            plt.scatter(point.x, point.y, c='b')
+            ax.scatter(point.x, point.y, point.z, c='b')
 
         assert(self.start_point is not None)
-        plt.scatter(self.start_point.x, self.start_point.y, c='g')
+        ax.scatter(self.start_point.x, self.start_point.y, self.start_point.z, c='g')
 
         assert(self.end_point is not None)
-        plt.scatter(self.end_point.x, self.end_point.y, c='r')
-        
-        plt.xlim(tl_corner.x, br_corner.x)
-        plt.ylim(tl_corner.y, br_corner.y)
-        
+        ax.scatter(self.end_point.x, self.end_point.y, self.start_point.z, c='r')
+
+        ax.set_xlim(tl_corner.x, br_corner.x)
+        ax.set_ylim(tl_corner.y, br_corner.y)
+        ax.set_zlim(tl_corner.z, br_corner.z)
+
         plt.show()
 
     def to_file(self, filename, tl_corner: Point, br_corner: Point):
@@ -128,7 +132,7 @@ def gen_new_cloud(num_obstacles) -> PointCloud:
         radius = random.uniform(0.5, 2)
         obstacles.add_obstacle(Sphere(center, radius))
     
-    for _ in range(500):
+    for _ in range(50):
         cloud.add_point(obstacles.sample_colliding_point())
     
     start = obstacles.sample_safe_point()
