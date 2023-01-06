@@ -159,7 +159,6 @@ def main():
 
         cloud = gen_new_cloud(num_obstacles)
 
-        print(cloud)
         cloud.plot(Point(-10, -10, -10), Point(10, 10, 10))
 
         cloud.to_file("test.cld", Point(-10, -10, -10), Point(10, 10, 10))
