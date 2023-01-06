@@ -35,6 +35,10 @@ AStar::AStar(Point tl_corner, Point bl_corner, int num_cells, Point start, Point
     int z_size = abs(tl_corner.z - bl_corner.z);
     z_size = z_size / num_cells;
 
+    grid_cell_len_x = x_size;
+    grid_cell_len_y = y_size;
+    grid_cell_len_z = z_size;
+
     // Reshape this->occ_grid to be a 3D vector of size num_cells x num_cells x num_cells
     this->occ_grid.resize(num_cells, vector<vector<bool>>(num_cells, vector<bool>(num_cells, false)));
 
@@ -106,18 +110,24 @@ void AStar::push_open(AStarPoint* point) {
     // Check if the point is already in the open list
     for (auto open_point : open) {
         if (open_point->x == point->x && open_point->y == point->y && open_point->z == point->z) {
-            // If the point is already in the open list, check if the new point has a lower cost
-            if (point->prev_cost < open_point->prev_cost) {
-                // If the new point has a lower cost, replace the old point with the new point
-                open_point->prev_cost = point->prev_cost;
-                open_point->est_cost = point->est_cost;
-                open_point->parent = point->parent;
-            }
+            // Output both points
+            // cout << "Point already in open list: " << endl;
+            // cout << "Point 1: " << open_point->x << ", " << open_point->y << ", " << open_point->z << endl;
+            // cout << "Point 2: " << point->x << ", " << point->y << ", " << point->z << endl;
 
-            // Sort the open list by est_cost
-            sort(open.begin(), open.end(), [](AStarPoint* a, AStarPoint* b) {
-                return a->est_cost > b->est_cost;
-            });
+            // Delete the new point
+            delete point;
+            return;
+        }
+    }
+
+    // Check if the point is already in the closed list
+    for (auto closed_point : closed) {
+        if (closed_point->x == point->x && closed_point->y == point->y && closed_point->z == point->z) {
+            // Output both points
+            // cout << "Point already in closed list: " << endl;
+            // cout << "Point 1: " << closed_point->x << ", " << closed_point->y << ", " << closed_point->z << endl;
+            // cout << "Point 2: " << point->x << ", " << point->y << ", " << point->z << endl;
 
             // Delete the new point
             delete point;
@@ -129,9 +139,55 @@ void AStar::push_open(AStarPoint* point) {
     open.push_back(point);
 
     // Sort the open list by est_cost in descending order
-    sort(open.begin(), open.end(), [](AStarPoint* a, AStarPoint* b) {
+    std::sort(open.begin(), open.end(), [](AStarPoint* a, AStarPoint* b) {
         return a->est_cost > b->est_cost;
     });    
+}
+
+std::vector<Point*> AStar::get_neighbors(AStarPoint* point) {
+    std::vector<Point*> neighbors;
+
+    // There will be at most 26 neighbors for each point
+    // There may be less if the point is on the edge of the grid
+    neighbors.reserve(26);
+
+    // Loop through all the possible neighbors
+    for (int i = -1; i <= 1; i++) {
+        for (int j = -1; j <= 1; j++) {
+            for (int k = -1; k <= 1; k++) {
+                // Make sure the neighbor is not the point itself
+                if (i == 0 && j == 0 && k == 0) {
+                    continue;
+                }
+
+                // Make sure the neighbor is within the grid
+                if (point->x + i < 0 || point->x + i >= this->grid_size) {
+                    // std::cout << "Neighbor out of bounds: " << point->x + i << ", " << point->y + j << ", " << point->z + k << std::endl;
+                    continue;
+                }
+                if (point->y + j < 0 || point->y + j >= this->grid_size) {
+                    // std::cout << "Neighbor out of bounds: " << point->x + i << ", " << point->y + j << ", " << point->z + k << std::endl;
+                    continue;
+                }
+                if (point->z + k < 0 || point->z + k >= this->grid_size) {
+                    // std::cout << "Neighbor out of bounds: " << point->x + i << ", " << point->y + j << ", " << point->z + k << std::endl;
+                    continue;
+                }
+
+                // Make sure the neighbor is not an obstacle
+                if (this->occ_grid[point->x + i][point->y + j][point->z + k]) {
+                    // std::cout << "Neighbor is an obstacle: " << point->x + i << ", " << point->y + j << ", " << point->z + k << std::endl;
+                    continue;
+                }
+
+                // Add the neighbor to the list
+                Point* new_point = conv_offset_astar_point(point, i, j, k);
+                neighbors.push_back(new_point);
+            }
+        }
+    }
+
+    return neighbors;
 }
 
 std::vector<Point> AStar::run() {
@@ -142,29 +198,84 @@ std::vector<Point> AStar::run() {
 
     this->open.clear();
     this->closed.clear();
+    this->path.clear();
 
     // Add the start point to the open list
     this->push_open(this->start);
+
+    // std::cout << "Push open [0] is " << this->open[0]->x << ", " << this->open[0]->y << ", " << this->open[0]->z << std::endl;
+
+    // While the open list is not empty
+    while (this->open.size() > 0) {
+        // Get the lowest cost point from the open list
+        AStarPoint* current = this->pull_lowest_open();
+        Point* conv_current = conv_astar_point(current);
+
+        // std::cout << "Distance heuristic: " << this->dist(conv_current, goal) << std::endl;
+
+        // If the current point is the goal point, we are done
+        if (conv_current->x == this->goal->x && conv_current->y == this->goal->y && conv_current->z == this->goal->z) {
+            // We are done, lets build the path
+            AStarPoint* path_point = current;
+            while (path_point != nullptr) {
+                this->path.push_back(*conv_astar_point(path_point));
+                path_point = path_point->parent;
+            }
+
+            // Reverse the path so that it starts at the start point
+            reverse(this->path.begin(), this->path.end());
+
+            // Return the path
+            return this->path;
+        }
+
+        // Get the neighbors of the current point
+        vector<Point*> neighbors = this->get_neighbors(current);
+
+        // std::cout << "Neighbors: " << neighbors.size() << std::endl;
+
+        // For each neighbor
+        for (auto neighbor : neighbors) {
+            // Add the new point to the open list
+            // Automatically performs the necessary checks to make sure we
+            // don't add the same point twice or add a point that is in the closed list
+            // std::cout << "Neighbor: " << neighbor->x << ", " << neighbor->y << ", " << neighbor->z << std::endl;
+            this->push_open(neighbor, current);
+        }
+
+        // std::cout << "Open: " << this->open.size() << std::endl;
+    }
+
+    // If we get here, there is no path
+    return this->path;
 }
 
 AStarPoint* AStar::conv_point(Point* point, AStarPoint* parent) {
     AStarPoint* astar_point = new AStarPoint();
-    astar_point->x = point->x;
-    astar_point->y = point->y;
-    astar_point->z = point->z;
+    astar_point->x = (point->x - tl_point->x) / this->grid_cell_len_x;
+    astar_point->y = (point->y - tl_point->y) / this->grid_cell_len_y;
+    astar_point->z = (point->z - tl_point->z) / this->grid_cell_len_z;
     astar_point->parent = parent;
-    astar_point->prev_cost = parent->prev_cost;
+    if (parent == nullptr) {
+        astar_point->prev_cost = 0;
+    } else {
+        astar_point->prev_cost = parent->prev_cost;
+    }
 
+    // BIG TODO
+    // THIS IS NOT CORRECT IF THE GRID IS NOT A CUBIC SHAPE IN SPACE
     // Add this->gride size for straight moves and sqrt(2 * this->grid_size) for diagonal moves and sqrt(3 * this->grid_size) for 3D diagonal moves
     // Everytime I write something like this I think that I should return my CS degree
-    if ((parent->x == point->x && parent->y == point->y) || (parent->x == point->x && parent->z == point->z) || (parent->y == point->y && parent->z == point->z)) {
-        astar_point->prev_cost += this->grid_size;
-    } else if ((parent->x == point->x && parent->y != point->y && parent->z != point->z)
-            || (parent->x != point->x && parent->y == point->y && parent->z != point->z)
-            || (parent->x != point->x && parent->y != point->y && parent->z == point->z)) {
-        astar_point->prev_cost += sqrt(2 * this->grid_size);
-    } else {
-        astar_point->prev_cost += sqrt(3 * this->grid_size);
+    if (parent != nullptr) {
+        if ((parent->x == point->x && parent->y == point->y) || (parent->x == point->x && parent->z == point->z) || (parent->y == point->y && parent->z == point->z)) {
+            astar_point->prev_cost += this->grid_cell_len_x;
+        } else if ((parent->x == point->x && parent->y != point->y && parent->z != point->z)
+                || (parent->x != point->x && parent->y == point->y && parent->z != point->z)
+                || (parent->x != point->x && parent->y != point->y && parent->z == point->z)) {
+            astar_point->prev_cost += sqrt(2 * this->grid_cell_len_x);
+        } else {
+            astar_point->prev_cost += sqrt(3 * this->grid_cell_len_x);
+        }
     }
 
     astar_point->est_cost = astar_point->prev_cost + dist(point, this->goal);
@@ -172,11 +283,21 @@ AStarPoint* AStar::conv_point(Point* point, AStarPoint* parent) {
     return astar_point;
 }
 
+
+Point* AStar::conv_offset_astar_point(AStarPoint* point, int x_off, int y_off, int z_off) {
+    Point* conv_point = new Point();
+    conv_point->x = double(point->x + x_off) / this->grid_cell_len_x + tl_point->x ;
+    conv_point->y = double(point->y + y_off) / this->grid_cell_len_y + tl_point->y ;
+    conv_point->z = double(point->z + z_off) / this->grid_cell_len_z + tl_point->z ;
+
+    return conv_point;
+}
+
 Point* AStar::conv_astar_point(AStarPoint* point) {
     Point* conv_point = new Point();
-    conv_point->x = point->x;
-    conv_point->y = point->y;
-    conv_point->z = point->z;
+    conv_point->x = double(point->x) / this->grid_cell_len_x + tl_point->x;
+    conv_point->y = double(point->y) / this->grid_cell_len_y + tl_point->y;
+    conv_point->z = double(point->z) / this->grid_cell_len_z + tl_point->z;
 
     return conv_point;
 }

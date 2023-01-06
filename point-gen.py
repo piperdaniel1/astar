@@ -23,6 +23,7 @@ class PointCloud:
         self.point_list = point_list
         self.start_point = None
         self.end_point = None
+        self.path = []
     
     def __str__(self):
         return f"PointCloud (n={len(self.point_list)}): {self.point_list}"
@@ -41,6 +42,9 @@ class PointCloud:
 
         for point in self.point_list:
             ax.scatter(point.x, point.y, point.z, c='b')
+
+        for point in self.path:
+            ax.scatter(point.x, point.y, point.z, c='g')
 
         assert(self.start_point is not None)
         ax.scatter(self.start_point.x, self.start_point.y, self.start_point.z, c='g')
@@ -70,6 +74,8 @@ class PointCloud:
             for point in self.point_list:
                     f.write(f"\n{point.x} {point.y} {point.z}")
 
+    def import_path(self, path):
+        self.path = path
 
 class Obstacle:
     def __init__(self, _type, center):
@@ -159,9 +165,22 @@ def main():
 
         cloud = gen_new_cloud(num_obstacles)
 
-        cloud.plot(Point(-10, -10, -10), Point(10, 10, 10))
+        path = []
+        try:
+            with open("path.cld") as f:
+                path_lines = f.readlines()
 
+            for line in path_lines:
+                cord_split = line.split()
+                path.append(Point(float(cord_split[0]), float(cord_split[1]), float(cord_split[2])))
+        except FileNotFoundError:
+            pass
+    
+        print(path)
+
+        cloud.plot(Point(-10, -10, -10), Point(10, 10, 10))
         cloud.to_file("test.cld", Point(-10, -10, -10), Point(10, 10, 10))
+
         
 
 if __name__ == "__main__":

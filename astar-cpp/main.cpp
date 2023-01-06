@@ -141,6 +141,19 @@ int main() {
         return 1;
     }
 
+    // get the path
+    std::vector<Point> path = pathfinder->run();
+
+    // print the path
+    if (path.empty()) {
+        std::cout << "No path found" << std::endl;
+        return 1;
+    }
+
+    std::cout << "Path: " << std::endl;
+    for (auto point : path) {
+        std::cout << point << std::endl;
+    }
 
     delete pathfinder;
     return 0;

@@ -22,7 +22,7 @@ class Point {
 
     // cout << operator for Point
     friend std::ostream& operator<<(std::ostream& os, const Point& point) {
-        os << "(" << point.x << ", " << point.y << ", " << point.z << ")";
+        os << point.x << " " << point.y << " " << point.z;
         return os;
     }
 };
@@ -58,7 +58,11 @@ class AStar {
     std::vector<std::vector<std::vector<bool>>> occ_grid;
     Point* tl_point;
     Point* br_point;
+    // number of cells in the grid
     int grid_size;
+    int grid_cell_len_x; // Length of a cell in the x direction
+    int grid_cell_len_y; // Length of a cell in the y direction
+    int grid_cell_len_z; // Length of a cell in the z direction
 
     // The start and goal points
     Point* start;
@@ -89,6 +93,10 @@ class AStar {
 
     AStarPoint* conv_point(Point* point, AStarPoint* parent);
     Point* conv_astar_point(AStarPoint* point);
+    Point* conv_offset_astar_point(AStarPoint* point, int x_off, int y_off, int z_off);
+
+    // Returns the neighbors of a point
+    std::vector<Point*> get_neighbors(AStarPoint* point);
 
     // Returns the L2 distance between two points
     double dist(Point* a, Point* b);
