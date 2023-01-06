@@ -34,8 +34,8 @@ class AStarPoint {
     int x;
     int y;
     int z;
-    int prev_cost;
-    int est_cost;
+    double prev_cost;
+    double est_cost;
     AStarPoint* parent;
 
     // cout << operator for AStarPoint

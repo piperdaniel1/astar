@@ -131,7 +131,7 @@ AStar* import_from_file(std::string filename) {
     }
 
     // Lets make the astar class
-    int num_cells = 20;
+    int num_cells = 21;
     return new AStar(tl_corner, br_corner, num_cells, start, goal, obstacles);
 }
 
