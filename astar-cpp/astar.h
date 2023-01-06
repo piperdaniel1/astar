@@ -16,9 +16,9 @@ class Point {
     Point();
     Point(int, int, int);
     PointType type;
-    int x;
-    int y;
-    int z;
+    double x;
+    double y;
+    double z;
 
     // cout << operator for Point
     friend std::ostream& operator<<(std::ostream& os, const Point& point) {
@@ -49,12 +49,15 @@ class AStar {
     public:
     AStar(Point, Point, int, Point, Point, std::vector<Point>);
     ~AStar();
+
+    // Runs the AStar algorithm
+    std::vector<Point> run();
     
     private:
     // 3D Occupancy grid for obstacles
     std::vector<std::vector<std::vector<bool>>> occ_grid;
-    Point tl_point;
-    Point br_point;
+    Point* tl_point;
+    Point* br_point;
     int grid_size;
 
     // The start and goal points
@@ -65,6 +68,9 @@ class AStar {
     std::vector<AStarPoint*> open;
     std::vector<AStarPoint*> closed;
 
+    // Cached path to goal
+    std::vector<Point> path;
+
     // has side effect of moving the lowest open into
     // the closed list
     AStarPoint* pull_lowest_open();
@@ -74,4 +80,17 @@ class AStar {
     //  - there are no duplicates in the open list
     //  - the point is not in the closed list
     void push_open(AStarPoint* point);
+
+    // Convenience method that converts a Point to an AStarPoint and assumes that the parent should be nullptr
+    void push_open(Point* point); 
+
+    // Convenience method that converts a Point to an AStarPoint
+    void push_open(Point* point, AStarPoint* parent); 
+
+    AStarPoint* conv_point(Point* point, AStarPoint* parent);
+    Point* conv_astar_point(AStarPoint* point);
+
+    // Returns the L2 distance between two points
+    double dist(Point* a, Point* b);
+    double dist(double x1, double y1, double z1, double x2, double y2, double z2);
 };

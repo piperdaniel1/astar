@@ -5,7 +5,7 @@
 #include <sstream>
 #include "astar.h"
 
-void import_from_file(std::string filename) {
+AStar* import_from_file(std::string filename) {
     // To run Astar, we need:
     //  - a 3D occupancy grid
     //  - a start point
@@ -26,7 +26,7 @@ void import_from_file(std::string filename) {
     std::ifstream file(filename);
     if (!file.is_open()) {
         std::cout << "Could not open file " << filename << std::endl;
-        return;
+        return nullptr;
     }
 
     std::string line;
@@ -43,13 +43,13 @@ void import_from_file(std::string filename) {
 
     std::string token;
     getline(ss, token, ' ');
-    tl_corner.x = std::stoi(token);
+    tl_corner.x = std::stod(token);
 
     getline(ss, token, ' ');
-    tl_corner.y = std::stoi(token);
+    tl_corner.y = std::stod(token);
 
     getline(ss, token, ' ');
-    tl_corner.z = std::stoi(token);
+    tl_corner.z = std::stod(token);
 
     // Now we get the br_corner
     br_corner = Point();
@@ -57,13 +57,13 @@ void import_from_file(std::string filename) {
     ss = std::stringstream(line);
 
     getline(ss, token, ' ');
-    br_corner.x = std::stoi(token);
+    br_corner.x = std::stod(token);
 
     getline(ss, token, ' ');
-    br_corner.y = std::stoi(token);
+    br_corner.y = std::stod(token);
 
     getline(ss, token, ' ');
-    br_corner.z = std::stoi(token);
+    br_corner.z = std::stod(token);
 
     // Now we get the start point
     start = Point();
@@ -71,13 +71,13 @@ void import_from_file(std::string filename) {
     ss = std::stringstream(line);
 
     getline(ss, token, ' ');
-    start.x = std::stoi(token);
+    start.x = std::stod(token);
 
     getline(ss, token, ' ');
-    start.y = std::stoi(token);
+    start.y = std::stod(token);
 
     getline(ss, token, ' ');
-    start.z = std::stoi(token);
+    start.z = std::stod(token);
 
     // Now we get the goal point
     goal = Point();
@@ -86,13 +86,13 @@ void import_from_file(std::string filename) {
     ss = std::stringstream(line);
 
     getline(ss, token, ' ');
-    goal.x = std::stoi(token);
+    goal.x = std::stod(token);
 
     getline(ss, token, ' ');
-    goal.y = std::stoi(token);
+    goal.y = std::stod(token);
 
     getline(ss, token, ' ');
-    goal.z = std::stoi(token);
+    goal.z = std::stod(token);
 
     // Now we get the obstacles
     getline(file, line);
@@ -104,19 +104,20 @@ void import_from_file(std::string filename) {
 
         Point obstacle = Point();
         getline(ss, token, ' ');
-        obstacle.x = std::stoi(token);
+        obstacle.x = std::stod(token);
 
         getline(ss, token, ' ');
-        obstacle.y = std::stoi(token);
+        obstacle.y = std::stod(token);
 
         getline(ss, token, ' ');
-        obstacle.z = std::stoi(token);
+        obstacle.z = std::stod(token);
 
         obstacles.push_back(obstacle);
     }
 
     // Now we have all the data we need to run Astar
     // Lets print everything out to make sure it is correct
+    std::cout << "  == Imported Data from '" << filename << "' ==" << std::endl;
     std::cout << "Version: " << version << std::endl;
     std::cout << "Top Left Corner: " << tl_corner << std::endl;
     std::cout << "Bottom Right Corner: " << br_corner << std::endl;
@@ -131,11 +132,16 @@ void import_from_file(std::string filename) {
 
     // Lets make the astar class
     int num_cells = 20;
-    AStar astar = AStar(tl_corner, br_corner, num_cells, start, goal, obstacles);
-
+    return new AStar(tl_corner, br_corner, num_cells, start, goal, obstacles);
 }
 
 int main() {
-    import_from_file("point-cloud.cld");
+    AStar * pathfinder = import_from_file("point-cloud.cld");
+    if (pathfinder == nullptr) {
+        return 1;
+    }
+
+
+    delete pathfinder;
     return 0;
 }
