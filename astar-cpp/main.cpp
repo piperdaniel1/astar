@@ -5,7 +5,7 @@
 #include <sstream>
 #include "astar.h"
 
-AStar* import_from_file(std::string filename) {
+AStar* import_from_file(std::string filename, int num_cells) {
     // To run Astar, we need:
     //  - a 3D occupancy grid
     //  - a start point
@@ -132,12 +132,29 @@ AStar* import_from_file(std::string filename) {
     }
 
     // Lets make the astar class
-    int num_cells = 20;
     return new AStar(tl_corner, br_corner, num_cells, start, goal, obstacles);
 }
 
-int main() {
-    AStar * pathfinder = import_from_file("point-cloud.cld");
+int main(int argc, char** argv) {
+    std::string input_file = "point-cloud.cld";
+    std::string output_file = "path.pcl";
+    int num_cells = 20;
+
+    for (int i=0; i<argc-1; i++) {
+        if (std::string(argv[i]) == "--in") {
+            input_file = argv[i+1];
+        }
+
+        if (std::string(argv[i]) == "--out") {
+            output_file = argv[i+1];
+        }
+
+        if (std::string(argv[i]) == "--res") {
+            num_cells = std::stoi(argv[i+1]);
+        }
+    }
+
+    AStar * pathfinder = import_from_file(input_file, num_cells);
     if (pathfinder == nullptr) {
         return 1;
     }

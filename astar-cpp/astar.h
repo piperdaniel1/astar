@@ -52,7 +52,7 @@ class AStar {
 
     // Runs the AStar algorithm
     std::vector<Point*> run();
-    
+
     private:
     // 3D Occupancy grid for obstacles
     std::vector<std::vector<std::vector<bool>>> occ_grid;
