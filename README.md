@@ -7,8 +7,9 @@
  
 ### Build astar-cpp:
 ```
-g++ -o main main.cpp astar.cpp
+make
 ```
+Or you can run ```make optimized``` to build with full compiler optimization. Run ```make clean``` to remove the executable.
 
 ### Running astar-cpp
 ```
