@@ -3,6 +3,7 @@
 ## Active tooling:
  - astar-cpp for generating 3d paths using the astar algorithm
  - python for generating sample point clouds and plotting
+ - rust-cpp is currently inactive
  
 ### Build astar-cpp:
 ```
