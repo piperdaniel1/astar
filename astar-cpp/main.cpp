@@ -25,7 +25,7 @@ AStar* import_from_file(std::string filename, int num_cells) {
     // Now we need to read the file
     std::ifstream file(filename);
     if (!file.is_open()) {
-        std::cout << "Could not open file " << filename << std::endl;
+        std::cerr << "Could not open file " << filename << std::endl;
         return nullptr;
     }
 
@@ -118,18 +118,18 @@ AStar* import_from_file(std::string filename, int num_cells) {
 
     // Now we have all the data we need to run Astar
     // Lets print everything out to make sure it is correct
-    std::cout << "  == Imported Data from '" << filename << "' ==" << std::endl;
-    std::cout << "Version: " << version << std::endl;
-    std::cout << "Top Left Corner: " << tl_corner << std::endl;
-    std::cout << "Bottom Right Corner: " << br_corner << std::endl;
+    // std::cout << "  == Imported Data from '" << filename << "' ==" << std::endl;
+    // std::cout << "Version: " << version << std::endl;
+    // std::cout << "Top Left Corner: " << tl_corner << std::endl;
+    // std::cout << "Bottom Right Corner: " << br_corner << std::endl;
 
-    std::cout << "Start: " << start << std::endl;
-    std::cout << "Goal: " << goal << std::endl;
+    // std::cout << "Start: " << start << std::endl;
+    // std::cout << "Goal: " << goal << std::endl;
 
-    std::cout << "Obstacles: " << std::endl;
-    for (auto obstacle : obstacles) {
-        std::cout << obstacle << std::endl;
-    }
+    // std::cout << "Obstacles: " << std::endl;
+    // for (auto obstacle : obstacles) {
+    //     std::cout << obstacle << std::endl;
+    // }
 
     // Lets make the astar class
     return new AStar(tl_corner, br_corner, num_cells, start, goal, obstacles);
@@ -164,11 +164,24 @@ int main(int argc, char** argv) {
 
     // print the path
     if (path.empty()) {
-        std::cout << "No path found" << std::endl;
+        std::cerr << "No path found" << std::endl;
         return 1;
     }
 
-    std::cout << "Path: " << std::endl;
+    // std::cout << "Path: " << std::endl;
+    // output to output_file
+
+    std::ofstream file(output_file);
+    if (!file.is_open()) {
+        // print error to stderr
+        std::cerr << "Could not open file " << output_file << std::endl;
+    } else {
+        for (auto point : path) {
+            file << *point << std::endl;
+        }
+    }
+
+    // We always print the path to stdout
     for (auto point : path) {
         std::cout << *point << std::endl;
     }

@@ -219,7 +219,7 @@ std::vector<Point*> AStar::run() {
     this->path.clear();
 
     // Add the start point to the open list
-    std::cout << "Start point: " << *this->start << std::endl;
+    // std::cout << "Start point: " << *this->start << std::endl;
     this->push_open(this->start);
 
     // std::cout << "Push open [0] is " << this->open[0]->x << ", " << this->open[0]->y << ", " << this->open[0]->z << std::endl;
