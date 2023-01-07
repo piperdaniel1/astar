@@ -1,135 +1,7 @@
 import sys
-import random
-from matplotlib import pyplot as plt
+from points import *
 
-class Point:
-    def __init__(self, x, y, z, _type='obstacle'):
-        self.x = x
-        self.y = y
-        self.z = z
-        self._type = _type
-    
-    def l1_distance(self, other):
-        return abs(self.x - other.x) + abs(self.y - other.y) + abs(self.z - other.z)
-
-    def __str__(self):
-        return f"{self.x=} {self.y=} {self.z=} {self._type}"
-    
-    def __repr__(self):
-        return f"Point({self.x}, {self.y}, {self.z}, _type='{self._type}')"
-
-class PointCloud:
-    def __init__(self, point_list):
-        self.point_list = point_list
-        self.start_point = None
-        self.end_point = None
-        self.path = []
-    
-    def __str__(self):
-        return f"PointCloud (n={len(self.point_list)}): {self.point_list}"
-    
-    def add_point(self, point):
-        if point._type == 'start':
-            self.start_point = point
-        elif point._type == 'end':
-            self.end_point = point
-        else:
-            self.point_list.append(point)
-    
-    def plot(self, tl_corner: Point, br_corner: Point):
-        fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
-
-        for point in self.point_list:
-            ax.scatter(point.x, point.y, point.z, c='b')
-
-        for point in self.path:
-            ax.scatter(point.x, point.y, point.z, c='g')
-
-        assert(self.start_point is not None)
-        ax.scatter(self.start_point.x, self.start_point.y, self.start_point.z, c='g')
-
-        assert(self.end_point is not None)
-        ax.scatter(self.end_point.x, self.end_point.y, self.end_point.z, c='r')
-
-        ax.set_xlim(tl_corner.x, br_corner.x)
-        ax.set_ylim(tl_corner.y, br_corner.y)
-        ax.set_zlim(tl_corner.z, br_corner.z)
-
-        plt.show()
-
-    def to_file(self, filename, tl_corner: Point, br_corner: Point):
-        if self.start_point is None or self.end_point is None:
-            raise ValueError("Start and end points must be set")
-
-        with open(filename, 'w') as f:
-            f.write(f"version=1")
-            f.write(f"\n{tl_corner.x} {tl_corner.y} {tl_corner.z}")
-            f.write(f"\n{br_corner.x} {br_corner.y} {br_corner.z}")
-
-            f.write(f"\n{self.start_point.x} {self.start_point.y} {self.start_point.z}")
-            f.write(f"\n{self.end_point.x} {self.end_point.y} {self.end_point.z}")
-
-            f.write(f"\n{len(self.point_list)}")
-            for point in self.point_list:
-                    f.write(f"\n{point.x} {point.y} {point.z}")
-
-    def import_path(self, path):
-        self.path = path
-
-class Obstacle:
-    def __init__(self, _type, center):
-        self._type = _type
-        self.center = center
-    
-    def __str__(self):
-        return f"{self._type=} {self.center=}"
-    
-    def is_colliding(self, point):
-        raise NotImplementedError
-
-class Sphere(Obstacle):
-    def __init__(self, center, radius):
-        super().__init__('sphere', center)
-        self.radius = radius
-    
-    def is_colliding(self, point):
-        return (point.x - self.center.x)**2 + (point.y - self.center.y)**2 + (point.z - self.center.z)**2 <= self.radius**2
-
-class ObstacleSpace:
-    def __init__(self, obstacle_list, tl_corner, br_corner):
-        self.obstacle_list = obstacle_list
-        self.tl_corner: Point = tl_corner
-        self.br_corner: Point = br_corner
-    
-    def is_colliding(self, point):
-        for obstacle in self.obstacle_list:
-            if obstacle.is_colliding(point):
-                return True
-        return False
-    
-    def add_obstacle(self, obstacle):
-        self.obstacle_list.append(obstacle)
-    
-    # oh god this is so inefficient
-    def sample_colliding_point(self):
-        while True:
-            point = Point(random.uniform(self.tl_corner.x, self.br_corner.x), random.uniform(self.tl_corner.y, self.br_corner.y), random.uniform(self.tl_corner.z, self.br_corner.z))
-            if self.is_colliding(point):
-                return point
-    
-    def sample_safe_point(self):
-        while True:
-            point = Point(random.uniform(self.tl_corner.x, self.br_corner.x), random.uniform(self.tl_corner.y, self.br_corner.y), random.uniform(self.tl_corner.z, self.br_corner.z))
-            if not self.is_colliding(point):
-                return point
-    
-def print_help():
-    print("Usage:")
-    print("python3 point-gen.py --new <num-obstacles>")
-    sys.exit(1)
-
-def gen_new_cloud(num_obstacles) -> PointCloud:
+def gen_new_cloud(num_obstacles, total_points) -> PointCloud:
     cloud = PointCloud([])
     obstacles = ObstacleSpace([], Point(-10, -10, -10), Point(10, 10, 10))
 
@@ -138,7 +10,7 @@ def gen_new_cloud(num_obstacles) -> PointCloud:
         radius = random.uniform(0.5, 2)
         obstacles.add_obstacle(Sphere(center, radius))
     
-    for _ in range(50):
+    for _ in range(total_points):
         cloud.add_point(obstacles.sample_colliding_point())
     
     start = obstacles.sample_safe_point()
@@ -154,57 +26,28 @@ def gen_new_cloud(num_obstacles) -> PointCloud:
 
     return cloud
 
-def gen_cloud_from_file(filename) -> PointCloud:
-    with open(filename) as f:
-        lines = f.readlines()
-    
-    if lines[0].split("=")[1].strip() != "1":
-        raise ValueError("Invalid file version")
-    
-    start: Point = Point(float(lines[3].split()[0]), float(lines[3].split()[1]), float(lines[3].split()[2]))
-    end: Point = Point(float(lines[4].split()[0]), float(lines[4].split()[1]), float(lines[4].split()[2]))
-
-    num_points = int(lines[5])
-    points = []
-    for i in range(num_points):
-        points.append(Point(float(lines[6 + i].split()[0]), float(lines[6 + i].split()[1]), float(lines[6 + i].split()[2])))
-
-    cloud = PointCloud(points)
-    cloud.start_point = start
-    cloud.end_point = end
-
-    print(cloud.start_point)
-    print(cloud.end_point)
-
-    return cloud
-
 def main():
-    if len(sys.argv) == 1:
-        print_help()
-    elif sys.argv[1] == "--new":
-        if len(sys.argv) != 3:
-            print_help()
+    num_obstacles = 3
+    resolution = 20
+    out_file = "point-cloud.cld"
 
-        num_obstacles = int(sys.argv[2])
+    for i, arg in enumerate(sys.argv):
+        if i == len(sys.argv) - 1:
+            break
 
-        # cloud = gen_new_cloud(num_obstacles)
-        cloud = gen_cloud_from_file("point-cloud.cld")
-
-        path = []
-        try:
-            with open("path.cld") as f:
-                path_lines = f.readlines()
-
-            for line in path_lines:
-                cord_split = line.split()
-                path.append(Point(float(cord_split[0]), float(cord_split[1]), float(cord_split[2])))
+        if arg == "--num":
+            num_obstacles = int(sys.argv[i + 1])
             
-            cloud.import_path(path)
-        except FileNotFoundError:
-            pass
+        if arg == "--res":
+            resolution = int(sys.argv[i + 1])
+        
+        if arg == "--out":
+            out_file = sys.argv[i + 1]
     
-        cloud.plot(Point(-10, -10, -10), Point(10, 10, 10))
-        cloud.to_file("test.cld", Point(-10, -10, -10), Point(10, 10, 10))
+    num_points = num_obstacles * resolution
+
+    cloud = gen_new_cloud(num_obstacles, num_points)
+    cloud.to_file(out_file, Point(-10, -10, -10), Point(10, 10, 10))
 
 if __name__ == "__main__":
     main()
