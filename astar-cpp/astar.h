@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cmath>
 #include <ostream>
+#include <chrono>
+#include <ctime>
 
 enum PointType {
     Obstacle,
@@ -95,4 +97,11 @@ class AStar {
     // Returns the L2 distance between two points
     double dist(AStarPoint* a, AStarPoint* b);
     double dist(double x1, double y1, double z1, double x2, double y2, double z2);
+
+    // Inserts a point into the open list using binary search
+    // Returns the index of the point in the open list
+    int insert_open(AStarPoint* point);
+    int insert_close(AStarPoint* point);
+    bool in_open(AStarPoint* point);
+    bool in_closed(AStarPoint* point);
 };

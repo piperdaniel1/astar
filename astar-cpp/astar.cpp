@@ -113,46 +113,84 @@ AStarPoint* AStar::pull_lowest_open() {
     AStarPoint* lowest = open.back();
     open.pop_back();
 
-    closed.push_back(lowest);
+    // closed.push_back(lowest);
+    this->insert_close(lowest);
+
     return lowest;
 }
 
 void AStar::push_open(AStarPoint* point) {
+    // store time
+    // auto list_start = std::chrono::high_resolution_clock::now();
     // Check if the point is already in the open list
-    for (auto open_point : open) {
-        if (open_point->x == point->x && open_point->y == point->y && open_point->z == point->z) {
-            // Output both points
-            // cout << "Point already in open list: " << endl;
-            // cout << "Point 1: " << open_point->x << ", " << open_point->y << ", " << open_point->z << endl;
-            // cout << "Point 2: " << point->x << ", " << point->y << ", " << point->z << endl;
+    // for (auto open_point : open) {
+    //     if (open_point->x == point->x && open_point->y == point->y && open_point->z == point->z) {
+    //         // Output both points
+    //         // cout << "Point already in open list: " << endl;
+    //         // cout << "Point 1: " << open_point->x << ", " << open_point->y << ", " << open_point->z << endl;
+    //         // cout << "Point 2: " << point->x << ", " << point->y << ", " << point->z << endl;
 
-            // Delete the new point
-            delete point;
-            return;
-        }
+    //         // Delete the new point
+    //         delete point;
+    //         return;
+    //     }
+    // }
+
+    if (this->in_open(point)) {
+        // cout << "Point already in open list: " << endl;
+        // cout << "Point 1: " << open_point->x << ", " << open_point->y << ", " << open_point->z << endl;
+        // cout << "Point 2: " << point->x << ", " << point->y << ", " << point->z << endl;
+
+        // Delete the new point
+        delete point;
+        return;
     }
 
     // Check if the point is already in the closed list
-    for (auto closed_point : closed) {
-        if (closed_point->x == point->x && closed_point->y == point->y && closed_point->z == point->z) {
-            // Output both points
-            // cout << "Point already in closed list: " << endl;
-            // cout << "Point 1: " << closed_point->x << ", " << closed_point->y << ", " << closed_point->z << endl;
-            // cout << "Point 2: " << point->x << ", " << point->y << ", " << point->z << endl;
+    // for (auto closed_point : closed) {
+    //     if (closed_point->x == point->x && closed_point->y == point->y && closed_point->z == point->z) {
+    //         // Output both points
+    //         // cout << "Point already in closed list: " << endl;
+    //         // cout << "Point 1: " << closed_point->x << ", " << closed_point->y << ", " << closed_point->z << endl;
+    //         // cout << "Point 2: " << point->x << ", " << point->y << ", " << point->z << endl;
 
-            // Delete the new point
-            delete point;
-            return;
-        }
+    //         // Delete the new point
+    //         delete point;
+    //         return;
+    //     }
+    // }
+
+    if (this->in_closed(point)) {
+        // cout << "Point already in closed list: " << endl;
+        // cout << "Point 1: " << closed_point->x << ", " << closed_point->y << ", " << closed_point->z << endl;
+        // cout << "Point 2: " << point->x << ", " << point->y << ", " << point->z << endl;
+
+        // Delete the new point
+        delete point;
+        return;
     }
 
-    // If the point is not in the open or closed list, add it to the open list
-    open.push_back(point);
+    // auto list_end = std::chrono::high_resolution_clock::now();
 
-    // Sort the open list by est_cost in descending order
-    std::sort(open.begin(), open.end(), [](AStarPoint* a, AStarPoint* b) {
-        return (a->est_cost+a->prev_cost) > (b->est_cost+b->prev_cost);
-    });    
+    // print time
+    // std::chrono::duration<double> list_time = list_end - list_start;
+    // cout << "List time: " << list_time.count() << endl;
+    
+
+    // open.push_back(point);
+
+    this->insert_open(point);
+
+    // auto sort_start = std::chrono::high_resolution_clock::now();
+    // // Sort the open list by est_cost in descending order
+    // std::sort(open.begin(), open.end(), [](AStarPoint* a, AStarPoint* b) {
+    //     return (a->est_cost+a->prev_cost) > (b->est_cost+b->prev_cost);
+    // });
+    // auto sort_end = std::chrono::high_resolution_clock::now();
+
+    // print time
+    // std::chrono::duration<double> sort_time = sort_end - sort_start;
+    // cout << "Sort time: " << sort_time.count() << endl;
 }
 
 std::vector<AStarPoint*> AStar::get_neighbors(AStarPoint* point) {
@@ -224,6 +262,9 @@ std::vector<Point*> AStar::run() {
 
     // std::cout << "Push open [0] is " << this->open[0]->x << ", " << this->open[0]->y << ", " << this->open[0]->z << std::endl;
 
+    // auto main_start_time = std::chrono::system_clock::now();
+    // init elapsed push time to zero
+    // std::chrono::duration<double> elapsed_push_time = std::chrono::duration<double>::zero();
     // While the open list is not empty
     while (this->open.size() > 0) {
         // Get the lowest cost point from the open list
@@ -244,6 +285,12 @@ std::vector<Point*> AStar::run() {
             // Reverse the path so that it starts at the start point
             reverse(this->path.begin(), this->path.end());
 
+            // Report time info
+            // auto main_end_time = std::chrono::system_clock::now();
+            // std::chrono::duration<double> elapsed_main_time = main_end_time - main_start_time;
+            // std::cout << "elapsed main time: " << elapsed_main_time.count() << "s" << std::endl;
+            // std::cout << "elapsed push time: " << elapsed_push_time.count() << "s" << std::endl;
+
             // Return the path
             return this->path;
         }
@@ -254,6 +301,7 @@ std::vector<Point*> AStar::run() {
         // std::cout << "Neighbors: " << neighbors.size() << std::endl;
 
         // For each neighbor
+        // auto push_start_time = std::chrono::system_clock::now();
         for (auto neighbor : neighbors) {
             // Add the new point to the open list
             // Automatically performs the necessary checks to make sure we
@@ -261,9 +309,12 @@ std::vector<Point*> AStar::run() {
             // std::cout << "Neighbor: " << neighbor->x << ", " << neighbor->y << ", " << neighbor->z << std::endl;
             this->push_open(neighbor);
         }
+        // add time to elapsed push time
+        // elapsed_push_time += std::chrono::system_clock::now() - push_start_time;
 
         // std::cout << "Open: " << this->open.size() << std::endl;
     }
+
 
     // If we get here, there is no path
     return this->path;
@@ -337,4 +388,130 @@ double AStar::dist(AStarPoint* a, AStarPoint* b) {
 
 double AStar::dist(double x1, double y1, double z1, double x2, double y2, double z2) {
     return abs(x1 - x2) + abs(y1 - y2) + abs(z1 - z2);
+}
+
+int AStar::insert_open(AStarPoint* point) {
+    // If the open list is empty, just add the point
+    if (this->open.size() == 0) {
+        this->open.push_back(point);
+        return 0;
+    }
+
+    // If the open list is not empty, find the correct place to insert the point
+    // The open list is sorted by the sum of the estimated cost and the previous cost
+    // The estimated cost is the distance from the current point to the goal
+    // The previous cost is the distance from the start to the current point
+    // The lower the sum, the closer the point is to the goal
+
+    // We start in the middle of the list and check if the point is closer to the
+    // goal than the point in the middle of the list. If it is, we check the
+    // points to the left of the middle. If it is not, we check the points to the
+    // right of the middle. We repeat this process until we find the correct
+    // place to insert the point
+    int left = 0;
+    int right = this->open.size() - 1;
+    int middle = (left + right) / 2;
+    while (left <= right) {
+        middle = (left + right) / 2;
+        if (point->est_cost + point->prev_cost > this->open[middle]->est_cost + this->open[middle]->prev_cost) {
+            right = middle - 1;
+        } else {
+            left = middle + 1;
+        }
+    }
+
+    // If we get here, we have found the correct place to insert the point
+    // We insert the point at the left index
+    this->open.insert(this->open.begin() + left, point);
+    return left;
+}
+
+int AStar::insert_close(AStarPoint* point) {
+    // If the closed list is empty, just add the point
+    if (this->closed.size() == 0) {
+        this->closed.push_back(point);
+        return 0;
+    }
+
+    // If the closed list is not empty, find the correct place to insert the point
+    // The closed list is sorted by the sum of the estimated cost and the previous cost
+    // The estimated cost is the distance from the current point to the goal
+    // The previous cost is the distance from the start to the current point
+    // The lower the sum, the closer the point is to the goal
+
+    // We start in the middle of the list and check if the point is closer to the
+    // goal than the point in the middle of the list. If it is, we check the
+    // points to the left of the middle. If it is not, we check the points to the
+    // right of the middle. We repeat this process until we find the correct
+    // place to insert the point
+    int left = 0;
+    int right = this->closed.size() - 1;
+    int middle = (left + right) / 2;
+    while (left <= right) {
+        middle = (left + right) / 2;
+        if (point->est_cost + point->prev_cost > this->closed[middle]->est_cost + this->closed[middle]->prev_cost) {
+            right = middle - 1;
+        } else {
+            left = middle + 1;
+        }
+    }
+
+    // If we get here, we have found the correct place to insert the point
+    // We insert the point at the left index
+    this->closed.insert(this->closed.begin() + left, point);
+    return left;
+}
+
+bool AStar::in_open(AStarPoint* point) {
+    // If the open list is empty return false
+    if (this->open.size() == 0) {
+        return false;
+    }
+
+    int left = 0;
+    int right = this->open.size() - 1;
+    int middle = (left + right) / 2;
+    while (left <= right) {
+        middle = (left + right) / 2;
+        if (point->est_cost + point->prev_cost > this->open[middle]->est_cost + this->open[middle]->prev_cost) {
+            right = middle - 1;
+        } else {
+            left = middle + 1;
+        }
+    }
+
+    // Check if we found the point
+    if (this->open[left]->x == point->x && this->open[left]->y == point->y && this->open[left]->z == point->z) {
+        return true;
+    }
+
+    // If we get here, we did not find the point
+    return false;
+}
+
+bool AStar::in_closed(AStarPoint* point) {
+    // If the closed list is empty return false
+    if (this->closed.size() == 0) {
+        return false;
+    }
+
+    int left = 0;
+    int right = this->closed.size() - 1;
+    int middle = (left + right) / 2;
+    while (left <= right) {
+        middle = (left + right) / 2;
+        if (point->est_cost + point->prev_cost > this->closed[middle]->est_cost + this->closed[middle]->prev_cost) {
+            right = middle - 1;
+        } else {
+            left = middle + 1;
+        }
+    }
+
+    // Check if we found the point
+    if (this->closed[left]->x == point->x && this->closed[left]->y == point->y && this->closed[left]->z == point->z) {
+        return true;
+    }
+
+    // If we get here, we did not find the point
+    return false;
 }
