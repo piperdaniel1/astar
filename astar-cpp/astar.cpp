@@ -136,6 +136,19 @@ void AStar::push_open(AStarPoint* point) {
     //     }
     // }
 
+    // for (int i = 0; i < open.size(); i++) {
+    //     if (open[i]->x == point->x && open[i]->y == point->y && open[i]->z == point->z) {
+    //         // Output both points
+    //         // cout << "Point already in open list: " << endl;
+    //         // cout << "Point 1: " << open_point->x << ", " << open_point->y << ", " << open_point->z << endl;
+    //         // cout << "Point 2: " << point->x << ", " << point->y << ", " << point->z << endl;
+
+    //         // Delete the new point
+    //         delete point;
+    //         return;
+    //     }
+    // }
+
     if (this->in_open(point)) {
         // cout << "Point already in open list: " << endl;
         // cout << "Point 1: " << open_point->x << ", " << open_point->y << ", " << open_point->z << endl;
@@ -160,15 +173,28 @@ void AStar::push_open(AStarPoint* point) {
     //     }
     // }
 
-    if (this->in_closed(point)) {
-        // cout << "Point already in closed list: " << endl;
-        // cout << "Point 1: " << closed_point->x << ", " << closed_point->y << ", " << closed_point->z << endl;
-        // cout << "Point 2: " << point->x << ", " << point->y << ", " << point->z << endl;
+    for (int i = 0; i < closed.size(); i++) {
+        if (closed[i]->x == point->x && closed[i]->y == point->y && closed[i]->z == point->z) {
+            // Output both points
+            // cout << "Point already in closed list: " << endl;
+            // cout << "Point 1: " << closed_point->x << ", " << closed_point->y << ", " << closed_point->z << endl;
+            // cout << "Point 2: " << point->x << ", " << point->y << ", " << point->z << endl;
 
-        // Delete the new point
-        delete point;
-        return;
+            // Delete the new point
+            delete point;
+            return;
+        }
     }
+
+    // if (this->in_closed(point)) {
+    //     // cout << "Point already in closed list: " << endl;
+    //     // cout << "Point 1: " << closed_point->x << ", " << closed_point->y << ", " << closed_point->z << endl;
+    //     // cout << "Point 2: " << point->x << ", " << point->y << ", " << point->z << endl;
+
+    //     // Delete the new point
+    //     delete point;
+    //     return;
+    // }
 
     // auto list_end = std::chrono::high_resolution_clock::now();
 
@@ -463,8 +489,14 @@ int AStar::insert_close(AStarPoint* point) {
 }
 
 bool AStar::in_open(AStarPoint* point) {
-    // If the open list is empty return false
-    if (this->open.size() == 0) {
+    // normal o(n) search for small lists
+    if (this->open.size() < 350) {
+        for (auto o_point : this->open) {
+            if (o_point->x == point->x && o_point->y == point->y && o_point->z == point->z) {
+                return true;
+            }
+        }
+
         return false;
     }
 
@@ -494,8 +526,14 @@ bool AStar::in_open(AStarPoint* point) {
 }
 
 bool AStar::in_closed(AStarPoint* point) {
-    // If the closed list is empty return false
-    if (this->closed.size() == 0) {
+    // normal o(n) search is faster for small lists
+    if (this->open.size() < 350) {
+        for (auto o_point : this->open) {
+            if (o_point->x == point->x && o_point->y == point->y && o_point->z == point->z) {
+                return true;
+            }
+        }
+
         return false;
     }
 
