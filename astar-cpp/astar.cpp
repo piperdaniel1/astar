@@ -480,6 +480,10 @@ bool AStar::in_open(AStarPoint* point) {
         }
     }
 
+    if (left >= this->open.size()) {
+        left = this->open.size() - 1;
+    }
+
     // Check if we found the point
     if (this->open[left]->x == point->x && this->open[left]->y == point->y && this->open[left]->z == point->z) {
         return true;
@@ -505,6 +509,10 @@ bool AStar::in_closed(AStarPoint* point) {
         } else {
             left = middle + 1;
         }
+    }
+
+    if (left >= this->closed.size()) {
+        left = this->closed.size() - 1;
     }
 
     // Check if we found the point
